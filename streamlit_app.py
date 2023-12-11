@@ -1,40 +1,48 @@
-import altair as alt
-import numpy as np
-import pandas as pd
 import streamlit as st
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy.stats import norm
+from math import sqrt
 
-"""
-# Welcome to Streamlit!
+# Creates Calculator Function
+def confidence_interval(mean, standard_deviation, sample_size):
+    a = mean
+    b = standard_deviation
+    c = sample_size
 
-Edit `/streamlit_app.py` to customize this app to your heart's desire :heart:.
-If you have any questions, checkout our [documentation](https://docs.streamlit.io) and [community
-forums](https://discuss.streamlit.io).
+    # Returns Lower and Upper Bounds
+    return (a - 1.9600 * (b / sqrt(c)), a + 1.9600 * (b / sqrt(c)))
 
-In the meantime, below is an example of what you can do with just a few lines of code:
-"""
+# Streamlit app
+def main():
+    st.title("Confidence Interval Calculator")
 
-num_points = st.slider("Number of points in spiral", 1, 10000, 1100)
-num_turns = st.slider("Number of turns in spiral", 1, 300, 31)
+    # Input values
+    mean = st.number_input("Mean:", value=0.8)
+    std_dev = st.number_input("Standard Deviation:", value=0.05)
+    sample_size = st.number_input("Sample Size:", value=30)
 
-indices = np.linspace(0, 1, num_points)
-theta = 2 * np.pi * num_turns * indices
-radius = indices
+    # Calculate confidence interval
+    lower_bound, upper_bound = confidence_interval(mean, std_dev, sample_size)
 
-x = radius * np.cos(theta)
-y = radius * np.sin(theta)
+    # Display results
+    st.write(f"Lower Bound: {lower_bound:.4f}")
+    st.write(f"Upper Bound: {upper_bound:.4f}")
 
-df = pd.DataFrame({
-    "x": x,
-    "y": y,
-    "idx": indices,
-    "rand": np.random.randn(num_points),
-})
+    # Plot normal distribution
+    x = np.linspace(mean - 4 * std_dev, mean + 4 * std_dev, 1000)
+    y = norm.pdf(x, mean, std_dev)
+    
+    plt.plot(x, y, label='Normal Distribution')
+    plt.fill_between(x, y, where=[(xi >= lower_bound) and (xi <= upper_bound) for xi in x], alpha=0.3, color='orange', label='Confidence Interval')
+    
+    plt.title('Normal Distribution with Confidence Interval')
+    plt.xlabel('Values')
+    plt.ylabel('Probability Density')
+    plt.legend()
 
-st.altair_chart(alt.Chart(df, height=700, width=700)
-    .mark_point(filled=True)
-    .encode(
-        x=alt.X("x", axis=None),
-        y=alt.Y("y", axis=None),
-        color=alt.Color("idx", legend=None, scale=alt.Scale()),
-        size=alt.Size("rand", legend=None, scale=alt.Scale(range=[1, 150])),
-    ))
+    # Display the plot using Streamlit
+    st.pyplot()
+
+if __name__ == "__main__":
+    main()
